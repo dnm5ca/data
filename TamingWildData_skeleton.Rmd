@@ -1,0 +1,383 @@
+---
+title: "Taming Wild Data"
+author: "Research and Data Services at HSL"
+date: "3/2/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+Data analysis involves a large amount of [janitorwork](http://www.nytimes.com/2014/08/18/technology/for-big-data-scientists-hurdle-to-insights-is-janitor-work.html) -- munging and cleaning data to facilitate downstream data analysis. In fact, data scientists say that around [80%](https://www.infoworld.com/article/3228245/data-science/the-80-20-data-science-dilemma.html) of their time is taken up by data cleaning tasks compared to just 20% for the actual analyses.
+
+Our goal will be to produce "tidy data" that we can then use to derive some insights. [Tidy data](https://vita.had.co.nz/papers/tidy-data.pdf) is defined as:
+1. Each variable forms a column.
+2. Each observation forms a row.
+3. Each type of observational unit forms a table.
+
+To transform the data into tidy data will take different steps depending on the nature of the untidyness. Hadley Wickham, who works for RStudio, says "tidy datasets are all alike but every messy dataset is messy in its own way."
+
+This lesson demonstrates techniques for data cleaning and manipulation using the split-apply-combine strategy. We will make use of the tidyr package to clean the data. The dplyr package will help us effectively manipulate and conditionally compute summary statistics over subsets of data, while the stringr package will help us interact with string data. 
+
+**This lesson assumes a [basic familiarity with R](r-basics.html) and [data frames](r-dataframes.html).**
+
+**Recommended Resources** 
+1. The [**_R for Data Science_ book**](http://r4ds.had.co.nz/tibbles.html) is a fabulous resource for learning to do data science in R.
+
+2. There are cheatsheets available on the [RStudio website](https://www.rstudio.com/resources/cheatsheets/) for **tidyr**, **dplyr**, and **stringr**, among others. They are excellent quick reference guides for what we will learn today.
+
+
+### Set up project & Download data
+
+First make new project folder and put the skeleton script and the data files in the project directory
+
+We need to load the readr, dplyr, tidyr, and stringr packages. All of these packages are contained in the tidyverse megapackage. Let's load those packages now - hopefully you have already installed them. If you get an error loading the package, use the Sticky Notes.
+
+```{r loadpkgs, results="hide"}
+#install.packages("tidyverse")
+# Load packages
+library(tidyverse)
+
+# Read in original datasets
+# IMDB Dataset : A data set of 1,000 popular movies on IMDB in the last 10 years
+imdb <- read_csv("IMDB-Movie-Data.csv")
+rt <- read_csv("Movie Ratings.csv")
+boxoffice_wide <- read_csv("boxoffice_wide.csv")
+
+# Display the data
+imdb
+rt
+boxoffice_wide
+
+# Optionally, bring up the data in a viewer window
+View(imdb)
+
+```
+
+## The pipe: **%>%**
+
+The dplyr package imports functionality from the [magrittr](https://github.com/smbache/magrittr) package that lets you _pipe_ the output of one function to the input of another, so you can avoid nesting functions. It looks like this: **`%>%`**. Quick keyboard shortcut is `Command+Shift+M` (mac) or `Control+Shift+M` (pc). You don't have to load the magrittr package to use it since dplyr imports its functionality when you load the dplyr package. 
+
+```{r tailpipe, results="hide"}
+
+```
+
+We can use this pipe operator to chain together operations rather than nesting functions together. For example, we can chain together a few functions from the dplyr package.
+
+## The dplyr package
+
+The [dplyr package](https://github.com/hadley/dplyr) is a relatively new R package that makes data manipulation fast and easy. It imports functionality from another package called magrittr that allows you to chain commands together into a pipeline that will completely change the way you write R code such that you're writing code the way you're thinking about the problem.
+
+The dplyr package gives you a handful of useful **verbs** for managing data. On their own they don't do anything that base R can't do. The first two verbs we will learn are filter and select
+
+1. `filter()`
+1. `select()`
+
+They all take a data frame or tibble as their input for the first argument, and they all return a data frame or tibble as output.
+ 
+### filter()
+
+If you want to filter **rows** of the data where some condition is true, use the `filter()` function. 
+
+1. The first argument is the data frame you want to filter, e.g. `filter(mydata, ...`.
+2. The second argument is a condition you must satisfy, e.g. `filter(clean, variable == "levelA")`.
+
+- `==`: Equal to
+- `!=`: Not equal to
+- `>`, `>=`: Greater than, greater than or equal to
+- `<`, `<=`: Less than, less than or equal to
+
+If you want to satisfy *all* of multiple conditions, you can use the "and" operator, `&`. 
+
+The "or" operator `|` (the pipe character, usually shift-backslash) will return a subset that meet *any* of the conditions.
+
+### select()
+
+Whereas the `filter()` function allows you to return only certain _rows_ matching a condition, the `select()` function returns only certain _columns_. The first argument is the data, and subsequent arguments are the columns you want.
+
+### dplyr in action
+
+```{r, results="hide"}
+# filter for Director = Christopher Nolan
+
+
+# filter for where the revenue is greater than 400 million 
+
+
+# filter for where the revenue is greater than 400 million then select the Title column
+
+# filter for where the revenue is greater than 400 million then select the Year column then table the frequency of each Year
+
+
+# More complicated Filter
+
+# The %in% operator
+
+```
+
+
+## EXERCISE 1
+1. Use filter to find how many movies in 2008 had a Metascore greater than 85. Answer should be 5.
+
+```{r, results="hide"}
+
+```
+
+
+2. Use filter to find the observations with a runtime between 2 and a half and 3 hours (150 & 180 minutes) followed by select to show the title, runtime, and revenue for these observations.
+
+```{r, results="hide"}
+
+```
+
+To show all the rows, use print(n = Inf)
+```{r, results="hide"}
+
+```
+
+## Separate
+
+```{r, results="hide"}
+
+```
+
+In looking at the output of original, we have a lot of work to do to tidy the data for analysis. 
+
+One of the first problems I see is that there are multiple pieces of data encoded into the column called `Genre`. Luckily, the data are separated neatly by `;`. Let's use the separate function from the tidyr package to create new columns from the original `Genre` column.
+
+```{r, results="hide"}
+
+#Genre has a maximum of 3 pieces of information
+
+```
+
+If the separator was not as neat as this, you can input any [regular expression](https://en.wikipedia.org/wiki/Regular_expression) into the separator argument. 
+
+## Resources for Regular Expressions
+For a nice cheatsheet for writing regular expressions in R, see a [Regex cheatsheet](http://www.cbs.dtu.dk/courses/27610/regular-expressions-cheat-sheet-v2.pdf). Jenny Bryan has created a nice website tutorial for learning to use [Regular Expressions in R](http://stat545.com/block022_regular-expression.html).
+
+Notice that our original variable `Genre` no longer appears. This change is good, but so far is only in the console. The originial dataframe is still unchanged. 
+```{r, results="hide"}
+
+```
+
+Let's keep the change created by the `separate()` function by saving original with separate back into original
+```{r, results="hide"}
+
+```
+
+The next problem we will tackle is reshaping the dataframe. Notice that we have several variables that seem to be encoding the same information across different years when we look at the boxoffice_wide dataset. 
+```{r, results="hide"}
+
+```
+
+Columns Total_Gross2006 through Total_Gross2016 and Average2006 through Average2016 tell us the box office total for that year the average box office for each movie in each of the years. We will use `gather` to change the dataframe from wide to long -- to make each of the years different rows. This will also help a lot when merging the datasets together.
+
+After the dataframe, `gather()` needs 3 other arguments. The first two are very important, but take some getting used to. `key` is the new column you want to create that has the old dataframe column headers. `value` corresponds to the row entries from old dataframe that you want in a new column. The third argument is the vector of columns that we want `gather()` to operate on.
+
+```{r, results="hide"}
+
+#Let's just take the Gross for now
+
+###Cleaning up and Using Select to get rid of multiple columns 
+#use the starts_with/ends_with functions.
+
+#make that change stick
+
+
+#Let's use mutate to get rid of the Total_Gross portion of year. 
+
+#if we wanted to put it back to the way it was, we can reverse it using spread, which takes things from long to wide
+
+
+```
+
+## EXERCISE 2
+1: Use `separate` to create three new columns in the imdb dataset called 'Primary_Actor' and 'Secondary_Actor' from the 'Actors' column. Think about how to separate the columns from each other. Look at the help menu for `separate` by calling `?separate`
+
+```{r, results="hide"}
+
+
+```
+
+2: Create a new, long dataset called `Ave` from the boxoffice_wide dataset that contains only the Year and the average box office per movie. This can be done in a very similar manner to the `Total_Gross` dataset.
+
+```{r}
+
+
+
+```
+
+## Break 
+
+### Merge Datasets Together
+
+There are several types of joins (merges) that we can use. The one you use depends upon your specific needs.
+
+inner_join(): return all rows from x where there are matching values in y, and all columns from x and y. If there are multiple matches between x and y, all combination of the matches are returned.
+
+left_join(): return all rows from x, and all columns from x and y. Rows in x with no match in y will have NA values in the new columns. If there are multiple matches between x and y, all combinations of the matches are returned.
+
+right_join(): return all rows from y, and all columns from x and y. Rows in y with no match in x will have NA values in the new columns. If there are multiple matches between x and y, all combinations of the matches are returned.
+
+full_join(): return all rows and all columns from both x and y. Where there are not matching values, returns NA for the one missing.
+
+Let's try an inner join
+```{r, results="hide"}
+#Notice that each of the datasets has a unit of observation as Title and Year (The Host appears twice). This Title/Year pair is what uniquely identifies each of the observations.
+
+#inner join imbd with rt
+
+#However, we still want to keep all the stuff from the imdb dataset
+
+#A right_join would keep things in the right dataset.
+
+#Let's finally join our reshaped box office data sets together
+
+#Let's join the box office dataset to our ratings data. Notice the only thing changing is the number of variables
+
+
+```
+
+##MUTATE 
+To create new variables or change variables in place, we are going to use dplyr's `mutate()` function. Just like the other dplyr verbs we learned, `filter()` and `select()`, `mutate()` takes a dataframe as the first argument and then the name of the new variable followed by a function to create the new variable. Remember, these functions don't modify the data frame you're operating on, and the result is transient unless you assign it to a new object or reassign it back to itself (not always a good practice).
+
+Let's use `mutate()` to calculate a few extra variables.
+```{r, results="hide"}
+
+##Case_When (Useful Function)
+
+```
+
+Next, we will use select to move certain columns into the front of the dataframe
+
+```{r, results="hide"}
+
+```
+
+Our last tidying step will be to remove cases where Revenue was missing.
+```{r, results="hide"}
+
+```
+
+
+## More fun with dplyr
+
+Let's use filter to look at specific actors
+
+```{r filter, results="hide"}
+# Look for Christian Bale
+
+
+```
+
+Can we use a regex and fuzzy matching to find Christian Bale in the Primary Actor column?
+```{r, results="hide"}
+#Regular Expressions are the key
+
+#However, we only want to look at the start of the string. We use the ^ to signify that.
+
+```
+
+This gets anything that starts with Chr/chr, but we need Christian Bale, not others
+```{r, results="hide"}
+#Here the ^ gets the front of the string and $ gets the end of the string.
+
+```
+
+Aside from the incredibly useful dplyr verbs `filter`, `select` and `mutate`, dplyr has a few other single-table verbs that we should learn.
+
+`arrange()`
+`summarize()`
+`group_by()`
+
+### arrange()
+
+The `arrange()` function does what it sounds like. It takes a data frame or tbl and arranges (or sorts) by column(s) of interest. The first argument is the data, and subsequent arguments are columns to sort on. Use the `desc()` function to arrange by descending.
+
+```{r arrange, results="hide"}
+# arrange by year
+
+# arrange by Revenue (default: increasing)
+
+# arrange by decreasing Revenue
+
+#arrange by multiple conditions. Year (ascending) THEN Revenue descending
+
+```
+
+----
+
+## EXERCISE 4
+
+1. First, filter the dataframe for the Director - Ridley Scott _and_ where the Metascore is greater than 50. 
+2. Pipe the filtered result to `arrange()` where you'll arrange the result of #1 by Revenue in descending order.
+3. Select only Title, Revenue, and Metascore from # 2 and pipe this result in a `View()` statement so you can see the entire result
+
+```{r ex_filterarrange, results="hide"}
+
+
+```
+
+### summarize()
+
+The `summarize()` function summarizes multiple values to a single value. On its own the `summarize()` function doesn't seem to be all that useful. The dplyr package provides a few convenience functions called `n()` and `n_distinct()` that tell you the number of observations or the number of distinct values of a particular variable.
+
+Notice that summarize takes a data frame and returns a data frame. In this case it's a 1x1 data frame with a single row and a single column. The name of the column, by default is whatever the expression was used to summarize the data. This usually isn't pretty, and if we wanted to work with this resulting data frame later on, we'd want to name that returned value something easier to deal with.
+
+```{r summarize, results="hide"}
+# Get the mean Revenue for all observations
+
+# Use a more friendly name, e.g., meanrev, or whatever you want to call it
+
+# Get the number of observations
+
+# The number of Primary Actors  in the data 
+
+```
+
+### group_by()
+
+We saw that `summarize()` isn't that useful on its own. Neither is `group_by()` All this does is takes an existing data frame and coverts it into a grouped data frame where operations are performed by group.
+
+```{r groupby, results="hide"}
+
+```
+
+The real power comes in where `group_by()` and `summarize()` are used together. First, write the `group_by()` statement. Then pipe the result to a call to `summarize()`.
+
+```{r, results="hide"}
+# Get the mean Revenue for each Genre
+
+#More group_by, rename, etc.
+
+```
+
+## EXERCISE 5
+Putting it all together
+
+1. Show the movies, Metascore, and Revenue for the Leonardo DiCaprio movies (as Primary Actor) when the Metascore is greater than 65. Sort by descending Metascore _Hint:_ 3 pipes: `filter`, `select`, and `arrange`.
+
+```{r, results="hide"}
+
+```
+
+2. What are the four movies with the highest Revenue when the Metascore is less than 50 & whose Genre1 is "Action"? Show only the Movie Title, Metascore, and Revenue. _Hint:_ 4 pipes: `filter`, `arrange`, `head`, and `select`.
+
+```{r, results="hide"}
+
+```
+
+3. When the Metascore is less than 50, what is the average imdb rating score, Metascore, and correlation between the two across movies with a Revenue greater than 30, separately for each Year?  _Hint:_ 3 pipes (maybe 4): `filter`, `group_by`, `summarize`.
+
+```{r, results="hide"}
+
+```
+
+#Miscellaneous (more piping,regex)
+```{r, results="hide"}
+
+#Using num_range
+
+#Looking for 'love' before a comma at the end of a string or just at the end of a string and nowhere else.
+
+```
